@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAppLinks } from '@/lib/links';
-import { isAccessTokenValid } from '@/lib/security/access';
+import { getProjectLinks } from '@/lib/links';
 
-export async function GET(request: Request) {
-  const token = request.headers.get('x-access-token');
-
-  if (!isAccessTokenValid(token)) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
-
+export async function GET() {
   return NextResponse.json({
     ok: true,
-    data: getAppLinks()
+    data: getProjectLinks()
   });
 }

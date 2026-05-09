@@ -1,86 +1,56 @@
-'use client';
-
 import Link from 'next/link';
+import { getProjectLinks } from '@/lib/links';
 
-type PublicLinks = {
-  folder: string;
-  cheatsheet: string;
-  table: string;
-  instruction: string;
-  askQuestion: string;
-};
+export function PublicHome() {
+  const links = getProjectLinks();
 
-type PublicHomeProps = {
-  links: PublicLinks;
-  defaultFormPath: string;
-};
-
-export function PublicHome({ links, defaultFormPath }: PublicHomeProps) {
   return (
-    <main className="relative overflow-hidden">
+    <main className="relative overflow-hidden pb-20">
       <div className="hero-glow hero-glow-a" />
       <div className="hero-glow hero-glow-b" />
 
-      <section className="mx-auto flex min-h-[88vh] w-full max-w-5xl items-center px-4 py-12">
-        <div className="section-card w-full animate-floatIn">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Проект команды</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-5xl">
-            Заполняем анкету, чтобы собрать сильную рабочую команду
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm text-slate-600 md:text-base">
-            Мы запускаем совместный проект и собираем роли, опыт, интересы и ограничения участников. Это нужно, чтобы правильно
-            распределить задачи, никого не перегрузить и быстро стартовать работу.
+      <section className="mx-auto flex min-h-[76vh] w-full max-w-6xl items-center px-4 py-12">
+        <div className="section-card w-full animate-floatIn bg-gradient-to-br from-white via-blue-50 to-cyan-50">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Проект команды</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-5xl">Собираем сильное маркетинговое агентство вместе</h1>
+          <p className="mt-4 max-w-3xl text-sm text-slate-700 md:text-base">
+            Эта анкета помогает нам понять, кто чем хочет заниматься, сколько времени готов выделять и где нужна поддержка. На основе ответов мы
+            формируем роли, распределяем задачи и запускаем работу без хаоса и лишних переписок.
+          </p>
+          <p className="mt-3 max-w-3xl text-sm text-slate-600 md:text-base">
+            Внутри всё сделано максимально просто: подсказки в каждом поле, пошаговая инструкция, быстрые ссылки на материалы и запись ответов в
+            Google-таблицу.
           </p>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">Что делаем</p>
-              <p className="mt-1 text-xs text-slate-600">Собираем данные по ролям, навыкам и доступности команды.</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">Для чего</p>
-              <p className="mt-1 text-xs text-slate-600">Чтобы задачи попадали правильным людям и работа шла без хаоса.</p>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">Сколько времени</p>
-              <p className="mt-1 text-xs text-slate-600">Обычно 5–10 минут, при этом ответы можно обновить позже.</p>
-            </div>
-          </div>
-
-          <div className="mt-7 flex flex-col gap-3 md:flex-row">
-            <Link
-              href={defaultFormPath}
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/form" className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
               Начни отсюда
             </Link>
-            <a
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              href={links.instruction}
-            >
+            <Link href="/instruction" className="rounded-xl border border-blue-200 bg-white px-6 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
               Пошаговая инструкция
-            </a>
+            </Link>
           </div>
-
-          <p className="mt-2 text-xs text-slate-500">Никаких ключей вводить не нужно — просто нажмите кнопку и заполните форму.</p>
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-5xl gap-4 px-4 pb-28 md:grid-cols-3">
+      <section className="mx-auto grid w-full max-w-6xl gap-4 px-4 md:grid-cols-3">
         <article className="section-card">
-          <h2 className="text-lg font-semibold">Как пройти форму</h2>
+          <h2 className="text-lg font-semibold">Зачем это нужно</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Нажмите «Начни отсюда», заполните все обязательные поля и отправьте. После отправки вы увидите статус сохранения.
+            Чтобы каждый участник попал в правильную роль, а у координатора была единая и актуальная картина по людям, навыкам и загрузке.
           </p>
         </article>
+
         <article className="section-card">
-          <h2 className="text-lg font-semibold">Что будет с данными</h2>
+          <h2 className="text-lg font-semibold">Какой результат</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Ответы автоматически записываются в таблицу проекта в нужные колонки. Повторная отправка обновляет вашу строку.
+            Ваши ответы автоматически попадают в нужные колонки таблицы. Если отправить форму повторно с тем же контактом — запись обновится, без
+            дублей.
           </p>
         </article>
+
         <article className="section-card">
-          <h2 className="text-lg font-semibold">Полезные ссылки</h2>
+          <h2 className="text-lg font-semibold">Материалы проекта</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.folder}>
               Папка проекта

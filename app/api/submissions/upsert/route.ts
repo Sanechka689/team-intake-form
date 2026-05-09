@@ -1,55 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { extractContactKey, intakeSchema } from '@/lib/form-schema';
-import { isAccessTokenValid } from '@/lib/security/access';
 import { getIdempotentResponse, saveIdempotentResponse } from '@/lib/security/idempotency';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { isSpamLike } from '@/lib/security/spam';
 import { getSheetService } from '@/lib/sheets/service';
-
-async function upsertViaAppsScript(input: {
-  payload: Record<string, unknown>;
-  requestId: string;
-  contactKey: string;
-}) {
-  const url = String(process.env.GOOGLE_APPS_SCRIPT_URL ?? '').trim();
-  const secret = String(process.env.GOOGLE_APPS_SCRIPT_SECRET ?? '').trim();
-  if (!url) {
-    return null;
-  }
-  if (!secret) {
-    throw new Error('Missing env: GOOGLE_APPS_SCRIPT_SECRET');
-  }
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      secret,
-      requestId: input.requestId,
-      contactKey: input.contactKey,
-      payload: input.payload
-    })
-  });
-
-  let json: any = null;
-  try {
-    json = await response.json();
-  } catch {
-    throw new Error('Apps Script returned non-JSON response');
-  }
-
-  if (!response.ok || !json?.ok) {
-    throw new Error(json?.error ?? `Apps Script error (${response.status})`);
-  }
-
-  return {
-    operation: json.operation ?? 'insert',
-    rowNumber: Number(json.rowNumber ?? 0),
-    requestId: json.requestId ?? input.requestId,
-    savedAt: json.savedAt ?? new Date().toISOString()
-  };
-}
 
 function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -59,12 +14,58 @@ function getClientIp(request: Request): string {
   return 'unknown';
 }
 
-export async function POST(request: Request) {
-  const token = request.headers.get('x-access-token');
-  if (!isAccessTokenValid(token)) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+async function sendToAppsScript(params: {
+  requestId: string;
+  contactKey: string;
+  payload: Record<string, unknown>;
+}): Promise<{ operation: 'insert' | 'update'; rowNumber: number; savedAt: string } | null> {
+  const url = String(process.env.GOOGLE_APPS_SCRIPT_URL ?? '').trim();
+  if (!url) {
+    return null;
   }
 
+  const secret = String(process.env.GOOGLE_APPS_SCRIPT_SECRET ?? '').trim();
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(secret ? { 'x-webhook-secret': secret } : {})
+    },
+    body: JSON.stringify({
+      requestId: params.requestId,
+      contactKey: params.contactKey,
+      payload: params.payload
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Apps Script error: HTTP ${response.status}`);
+  }
+
+  const json = (await response.json().catch(() => null)) as
+    | { ok?: boolean; operation?: 'insert' | 'update'; rowNumber?: number; savedAt?: string; error?: string }
+    | null;
+
+  if (!json) {
+    return {
+      operation: 'insert',
+      rowNumber: 0,
+      savedAt: new Date().toISOString()
+    };
+  }
+
+  if (json.ok === false) {
+    throw new Error(json.error ?? 'Apps Script rejected request');
+  }
+
+  return {
+    operation: json.operation === 'update' ? 'update' : 'insert',
+    rowNumber: Number(json.rowNumber ?? 0),
+    savedAt: json.savedAt ?? new Date().toISOString()
+  };
+}
+
+export async function POST(request: Request) {
   const requestId = request.headers.get('x-idempotency-key') ?? randomUUID();
   const cached = getIdempotentResponse(requestId);
   if (cached) {
@@ -97,23 +98,15 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
-    isSpamLike([
-      parsed.data.goal,
-      parsed.data.skills,
-      parsed.data.interests,
-      parsed.data.comment ?? '',
-      parsed.data.questions ?? ''
-    ])
-  ) {
+  if (isSpamLike([parsed.data.goal, parsed.data.skills, parsed.data.interests, parsed.data.comment ?? '', parsed.data.questions ?? ''])) {
     return NextResponse.json({ ok: false, error: 'Submission blocked by anti-spam' }, { status: 400 });
   }
 
   try {
-    const appsScriptResult = await upsertViaAppsScript({
-      payload: parsed.data,
+    const appsScriptResult = await sendToAppsScript({
       requestId,
-      contactKey
+      contactKey,
+      payload: parsed.data
     });
 
     const result =
@@ -128,7 +121,7 @@ export async function POST(request: Request) {
       ok: true,
       operation: result.operation,
       rowNumber: result.rowNumber,
-      requestId: appsScriptResult?.requestId ?? requestId,
+      requestId,
       savedAt: result.savedAt
     };
 

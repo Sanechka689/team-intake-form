@@ -1,60 +1,50 @@
-# Team Intake Website (Vercel + Google Sheets / Apps Script)
+# Team Intake Form (Vercel + Google Sheets)
 
-Минималистичный сайт-анкета для команды с подсказками и надёжной записью в Google Sheet.
+Простой и удобный сайт-анкета для команды: бриф, инструкция, подсказки и запись в таблицу.
 
-## Stack
-- Next.js 14 + TypeScript + Tailwind
-- React Hook Form + Zod
-- Google Sheets API (`googleapis`)
-- Google Apps Script Webhook (recommended)
+## Что есть сейчас
+- Главная страница с контекстом проекта и кнопкой `Начни отсюда`
+- Страница формы `/form` с подсказками и валидацией
+- Страница `/instruction` с пошаговой инструкцией
+- Страница `/thanks` после отправки
+- Фиксированное меню ссылок: папка, шпаргалка, таблица, инструкция, задать вопрос
+- Логотип в шапке (клик возвращает на главную)
 
-## Быстрый старт
-1. Скопировать `.env.example` в `.env.local` и заполнить переменные.
-2. Установить зависимости: `npm install`.
-3. Запустить: `npm run dev`.
-4. Открыть сайт на `/` (стартовый экран) или приватный маршрут `/s/<APP_SECRET>`.
+## Запись данных
+`POST /api/submissions/upsert`
 
-## Подготовка таблицы
-1. Конвертировать исходный `.xlsm` в нативный Google Sheet.
-2. Создать листы:
-   - `Анкеты участников`
-   - `Вопросы и решения`
-   - `audit_log`
-3. На листе `Анкеты участников`:
-   - Строка 1 — человекочитаемые заголовки.
-   - Строка 2 — `field_key` для API (минимум):
-     `name_contact,status,goal,skills,interests,dont_want,hours_per_week,participation_mode,roles_to_try,help_needed,constraints,comment,questions`
-   - Рекомендуется добавить `telegram_or_email`, `updated_at`, `last_request_id`.
+Логика:
+1. Проверка и валидация данных (Zod)
+2. Антиспам + rate limit
+3. Запись через `GOOGLE_APPS_SCRIPT_URL` (если задан)
+4. Иначе fallback на Google Sheets API через service account
+5. Idempotency по `x-idempotency-key`
 
-## API
-- `GET /api/links` — ссылки для интерфейса (требует `x-access-token`).
-- `POST /api/submissions/upsert` — upsert анкеты (требует `x-access-token`).
+## Запуск локально
+1. `cp .env.example .env.local`
+2. Заполнить ENV
+3. `npm install`
+4. `npm run dev`
 
-`POST /api/submissions/upsert` поддерживает 2 режима:
-1. **Apps Script webhook** (приоритетный), если задан `GOOGLE_APPS_SCRIPT_URL`.
-2. **Прямой Google Sheets API** через service account (legacy fallback).
+## Обязательные ENV (минимум)
+### Если используешь Apps Script (рекомендуется)
+- `GOOGLE_APPS_SCRIPT_URL`
+- `GOOGLE_APPS_SCRIPT_SECRET`
+- `LINK_FOLDER`, `LINK_CHEATSHEET`, `LINK_TABLE`, `LINK_INSTRUCTION`, `LINK_ASK_QUESTION`
 
-Response:
-`{ ok, operation: "insert"|"update", rowNumber, requestId, savedAt }`
+### Если используешь прямой Google Sheets API
+- `GOOGLE_CLIENT_EMAIL`
+- `GOOGLE_PRIVATE_KEY`
+- `GOOGLE_SHEET_ID`
+- `SHEET_PARTICIPANTS_TAB`, `SHEET_AUDIT_TAB`
 
-## Надёжность
-- Валидация на клиенте и сервере.
-- Upsert по нормализованному контакту.
-- Idempotency (`x-idempotency-key`).
-- Retry c backoff.
-- Read-after-write проверка.
-- `audit_log` на каждую операцию.
-- Honeypot + rate limit + антиспам.
+## Важный момент по таблице
+- Строка 1: человекочитаемые заголовки
+- Строка 2: `field_key`
+- Данные с `SHEET_DATA_START_ROW` (по умолчанию 3)
 
-## Deploy (Vercel)
-1. Подключить GitHub репозиторий.
-2. Вставить все ENV из `.env.example` в Vercel Project Settings.
-3. Проверить Preview deployment.
-4. Проверить запись в тестовую таблицу.
-5. Перевести в Production.
+Поддерживаемые `field_key`:
+`name_contact,status,goal,skills,interests,dont_want,hours_per_week,participation_mode,roles_to_try,help_needed,constraints,comment,questions`
 
-## Важные ENV для доступа
-- `APP_SECRET` — обязательный ключ доступа для маршрута `/s/<key>` и API.
-- `DEFAULT_FORM_PATH` — опционально, например `/s/<ваш_ключ>`, чтобы на стартовом экране была кнопка прямого перехода.
-- `GOOGLE_APPS_SCRIPT_URL` — URL развернутого Apps Script (`.../exec`).
-- `GOOGLE_APPS_SCRIPT_SECRET` — должен совпадать со `WEBHOOK_SECRET` в Script Properties Apps Script.
+Рекомендуемые тех-колонки:
+`telegram_or_email`, `updated_at`, `last_request_id`

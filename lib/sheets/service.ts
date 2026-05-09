@@ -5,8 +5,8 @@ import type { SheetService, UpsertInput, UpsertResult } from './types';
 
 const PARTICIPANTS_SHEET = process.env.SHEET_PARTICIPANTS_TAB ?? 'Анкеты участников';
 const AUDIT_SHEET = process.env.SHEET_AUDIT_TAB ?? 'audit_log';
-const FIELD_KEY_ROW = 2;
-const DATA_START_ROW = 3;
+const FIELD_KEY_ROW = Number(process.env.SHEET_FIELD_KEY_ROW ?? 2);
+const DATA_START_ROW = Number(process.env.SHEET_DATA_START_ROW ?? 3);
 
 function getEnv(name: string): string {
   const value = process.env[name];
@@ -71,7 +71,7 @@ class GoogleSheetService implements SheetService {
     const result = await withRetry(() =>
       this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: `${PARTICIPANTS_SHEET}!1:${toColumnName(60)}${FIELD_KEY_ROW}`
+        range: `${PARTICIPANTS_SHEET}!A1:${toColumnName(60)}${FIELD_KEY_ROW}`
       })
     );
 
@@ -156,6 +156,18 @@ class GoogleSheetService implements SheetService {
     return null;
   }
 
+  private async findFirstEmptyRow(maxColumnName: string): Promise<number> {
+    const result = await withRetry(() =>
+      this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: `${PARTICIPANTS_SHEET}!A${DATA_START_ROW}:${maxColumnName}`
+      })
+    );
+
+    const rows = result.data.values ?? [];
+    return DATA_START_ROW + rows.length;
+  }
+
   private async writeAuditLog(params: {
     requestId: string;
     operation: string;
@@ -221,21 +233,17 @@ class GoogleSheetService implements SheetService {
           })
         );
       } else {
-        const appendResult = await withRetry(() =>
-          this.sheets.spreadsheets.values.append({
+        rowNumber = await this.findFirstEmptyRow(maxColumnName);
+        await withRetry(() =>
+          this.sheets.spreadsheets.values.update({
             spreadsheetId: this.spreadsheetId,
-            range: `${PARTICIPANTS_SHEET}!A${DATA_START_ROW}:${maxColumnName}`,
+            range: `${PARTICIPANTS_SHEET}!A${rowNumber}:${maxColumnName}${rowNumber}`,
             valueInputOption: 'RAW',
-            insertDataOption: 'INSERT_ROWS',
             requestBody: {
               values: [rowValues]
             }
           })
         );
-
-        const updatedRange = appendResult.data.updates?.updatedRange;
-        const match = updatedRange?.match(/!(?:[A-Z]+)(\d+):/);
-        rowNumber = match ? Number(match[1]) : null;
         operation = 'insert';
       }
 
