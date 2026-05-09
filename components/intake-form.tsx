@@ -163,7 +163,8 @@ export function IntakeForm() {
 
     const json = await response.json();
     if (!response.ok || !json.ok) {
-      setServerError(`Ошибка отправки: ${json.error ?? 'не удалось сохранить форму'}`);
+      const details = String(json?.details ?? '').trim();
+      setServerError(`Ошибка отправки: ${json.error ?? 'не удалось сохранить форму'}${details ? `. ${details}` : ''}`);
       return;
     }
 

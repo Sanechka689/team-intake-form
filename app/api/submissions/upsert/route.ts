@@ -24,45 +24,93 @@ async function sendToAppsScript(params: {
     return null;
   }
 
-  const secret = String(process.env.GOOGLE_APPS_SCRIPT_SECRET ?? '').trim();
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(secret ? { 'x-webhook-secret': secret } : {})
-    },
-    body: JSON.stringify({
-      requestId: params.requestId,
-      contactKey: params.contactKey,
-      payload: params.payload
-    })
-  });
+  const secret = String(
+    process.env.GOOGLE_APPS_SCRIPT_SECRET ?? process.env.WEBHOOK_SECRET ?? process.env.APP_SECRET ?? ''
+  ).trim();
 
-  if (!response.ok) {
-    throw new Error(`Apps Script error: HTTP ${response.status}`);
-  }
+  const commonPayload = {
+    requestId: params.requestId,
+    contactKey: params.contactKey,
+    secret,
+    webhookSecret: secret,
+    webhook_secret: secret,
+    ...params.payload,
+    payload: params.payload
+  };
 
-  const json = (await response.json().catch(() => null)) as
-    | { ok?: boolean; operation?: 'insert' | 'update'; rowNumber?: number; savedAt?: string; error?: string }
-    | null;
+  const requests: Array<() => Promise<Response>> = [
+    () =>
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(secret ? { 'x-webhook-secret': secret } : {})
+        },
+        body: JSON.stringify(commonPayload)
+      }),
+    () => {
+      const form = new URLSearchParams();
+      Object.entries(commonPayload).forEach(([key, value]) => {
+        if (value === undefined || value === null) {
+          return;
+        }
+        if (typeof value === 'object') {
+          form.set(key, JSON.stringify(value));
+          return;
+        }
+        form.set(key, String(value));
+      });
+      return fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          ...(secret ? { 'x-webhook-secret': secret } : {})
+        },
+        body: form.toString()
+      });
+    }
+  ];
 
-  if (!json) {
+  const errors: string[] = [];
+
+  for (const makeRequest of requests) {
+    const response = await makeRequest();
+    const text = await response.text();
+
+    if (!response.ok) {
+      const snippet = text.slice(0, 220).replace(/\s+/g, ' ').trim();
+      errors.push(`HTTP ${response.status}${snippet ? `: ${snippet}` : ''}`);
+      continue;
+    }
+
+    let json: { ok?: boolean; operation?: 'insert' | 'update'; rowNumber?: number; savedAt?: string; error?: string } | null = null;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+
+    if (json?.ok === false) {
+      errors.push(json.error ?? 'Apps Script rejected request');
+      continue;
+    }
+
     return {
-      operation: 'insert',
-      rowNumber: 0,
-      savedAt: new Date().toISOString()
+      operation: json?.operation === 'update' ? 'update' : 'insert',
+      rowNumber: Number(json?.rowNumber ?? 0),
+      savedAt: json?.savedAt ?? new Date().toISOString()
     };
   }
 
-  if (json.ok === false) {
-    throw new Error(json.error ?? 'Apps Script rejected request');
-  }
+  throw new Error(`Apps Script failed: ${errors.join(' | ') || 'unknown error'}`);
+}
 
-  return {
-    operation: json.operation === 'update' ? 'update' : 'insert',
-    rowNumber: Number(json.rowNumber ?? 0),
-    savedAt: json.savedAt ?? new Date().toISOString()
-  };
+function hasSheetCredentials(): boolean {
+  return Boolean(
+    String(process.env.GOOGLE_CLIENT_EMAIL ?? '').trim() &&
+      String(process.env.GOOGLE_PRIVATE_KEY ?? '').trim() &&
+      String(process.env.GOOGLE_SHEET_ID ?? '').trim()
+  );
 }
 
 export async function POST(request: Request) {
@@ -103,19 +151,33 @@ export async function POST(request: Request) {
   }
 
   try {
-    const appsScriptResult = await sendToAppsScript({
-      requestId,
-      contactKey,
-      payload: parsed.data
-    });
+    let appsScriptError = '';
+    let appsScriptResult: { operation: 'insert' | 'update'; rowNumber: number; savedAt: string } | null = null;
 
-    const result =
-      appsScriptResult ??
-      (await getSheetService().upsertSubmission({
-        payload: parsed.data,
+    try {
+      appsScriptResult = await sendToAppsScript({
         requestId,
-        contactKey
-      }));
+        contactKey,
+        payload: parsed.data
+      });
+    } catch (error) {
+      appsScriptError = error instanceof Error ? error.message : 'Apps Script unknown error';
+    }
+
+    const result = appsScriptResult
+      ? appsScriptResult
+      : hasSheetCredentials()
+        ? await getSheetService().upsertSubmission({
+            payload: parsed.data,
+            requestId,
+            contactKey
+          })
+        : (() => {
+            throw new Error(
+              appsScriptError ||
+                'No working save backend. Configure GOOGLE_APPS_SCRIPT_URL (+ secret) or Google Sheets API credentials.'
+            );
+          })();
 
     const responsePayload = {
       ok: true,
