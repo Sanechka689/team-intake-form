@@ -115,7 +115,7 @@ export function IntakeForm({ token }: { token: string }) {
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-28 pt-8">
-      <section className="section-card animate-floatIn">
+      <section className="section-card animate-floatIn bg-gradient-to-br from-white via-white to-blue-50">
         <h1 className="text-3xl font-semibold tracking-tight">Анкета команды</h1>
         <p className="mt-3 text-slate-600">
           Заполните форму один раз. Если захотите изменить ответы позже — просто отправьте снова с тем же Telegram/Email.
