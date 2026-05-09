@@ -7,6 +7,50 @@ import { checkRateLimit } from '@/lib/security/rate-limit';
 import { isSpamLike } from '@/lib/security/spam';
 import { getSheetService } from '@/lib/sheets/service';
 
+async function upsertViaAppsScript(input: {
+  payload: Record<string, unknown>;
+  requestId: string;
+  contactKey: string;
+}) {
+  const url = String(process.env.GOOGLE_APPS_SCRIPT_URL ?? '').trim();
+  const secret = String(process.env.GOOGLE_APPS_SCRIPT_SECRET ?? '').trim();
+  if (!url) {
+    return null;
+  }
+  if (!secret) {
+    throw new Error('Missing env: GOOGLE_APPS_SCRIPT_SECRET');
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      secret,
+      requestId: input.requestId,
+      contactKey: input.contactKey,
+      payload: input.payload
+    })
+  });
+
+  let json: any = null;
+  try {
+    json = await response.json();
+  } catch {
+    throw new Error('Apps Script returned non-JSON response');
+  }
+
+  if (!response.ok || !json?.ok) {
+    throw new Error(json?.error ?? `Apps Script error (${response.status})`);
+  }
+
+  return {
+    operation: json.operation ?? 'insert',
+    rowNumber: Number(json.rowNumber ?? 0),
+    requestId: json.requestId ?? input.requestId,
+    savedAt: json.savedAt ?? new Date().toISOString()
+  };
+}
+
 function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
@@ -66,17 +110,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await getSheetService().upsertSubmission({
+    const appsScriptResult = await upsertViaAppsScript({
       payload: parsed.data,
       requestId,
       contactKey
     });
 
+    const result =
+      appsScriptResult ??
+      (await getSheetService().upsertSubmission({
+        payload: parsed.data,
+        requestId,
+        contactKey
+      }));
+
     const responsePayload = {
       ok: true,
       operation: result.operation,
       rowNumber: result.rowNumber,
-      requestId,
+      requestId: appsScriptResult?.requestId ?? requestId,
       savedAt: result.savedAt
     };
 

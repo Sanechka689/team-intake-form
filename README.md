@@ -1,4 +1,4 @@
-# Team Intake Website (Vercel + Google Sheets)
+# Team Intake Website (Vercel + Google Sheets / Apps Script)
 
 Минималистичный сайт-анкета для команды с подсказками и надёжной записью в Google Sheet.
 
@@ -6,6 +6,7 @@
 - Next.js 14 + TypeScript + Tailwind
 - React Hook Form + Zod
 - Google Sheets API (`googleapis`)
+- Google Apps Script Webhook (recommended)
 
 ## Быстрый старт
 1. Скопировать `.env.example` в `.env.local` и заполнить переменные.
@@ -29,6 +30,10 @@
 - `GET /api/links` — ссылки для интерфейса (требует `x-access-token`).
 - `POST /api/submissions/upsert` — upsert анкеты (требует `x-access-token`).
 
+`POST /api/submissions/upsert` поддерживает 2 режима:
+1. **Apps Script webhook** (приоритетный), если задан `GOOGLE_APPS_SCRIPT_URL`.
+2. **Прямой Google Sheets API** через service account (legacy fallback).
+
 Response:
 `{ ok, operation: "insert"|"update", rowNumber, requestId, savedAt }`
 
@@ -51,3 +56,5 @@ Response:
 ## Важные ENV для доступа
 - `APP_SECRET` — обязательный ключ доступа для маршрута `/s/<key>` и API.
 - `DEFAULT_FORM_PATH` — опционально, например `/s/<ваш_ключ>`, чтобы на стартовом экране была кнопка прямого перехода.
+- `GOOGLE_APPS_SCRIPT_URL` — URL развернутого Apps Script (`.../exec`).
+- `GOOGLE_APPS_SCRIPT_SECRET` — должен совпадать со `WEBHOOK_SECRET` в Script Properties Apps Script.
