@@ -1,23 +1,17 @@
-import { Navigation } from '@/components/navigation'
-import { HeroSection } from '@/components/hero-section'
-import { PhilosophySection } from '@/components/philosophy-section'
-import { PortfolioSection } from '@/components/portfolio-section'
-import { ValuesSection } from '@/components/values-section'
-import { QuoteSection } from '@/components/quote-section'
-import { ContactSection } from '@/components/contact-section'
-import { Footer } from '@/components/footer'
+import Link from 'next/link';
 
-export default function LampaPage() {
+export default function HomePage() {
   return (
-    <main className="relative overflow-x-hidden bg-[#0D0D0D]">
-      <Navigation />
-      <HeroSection />
-      <PhilosophySection />
-      <PortfolioSection />
-      <ValuesSection />
-      <QuoteSection />
-      <ContactSection />
-      <Footer />
+    <main className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+      <div className="section-card w-full text-center">
+        <h1 className="text-2xl font-semibold">Ссылка на анкету</h1>
+        <p className="mt-3 text-slate-600">Откройте приватную ссылку формата /s/ВАШ_КЛЮЧ.</p>
+        <p className="mt-6">
+          <Link className="text-sm font-medium text-blue-600 hover:text-blue-700" href="/s/demo">
+            Пример маршрута
+          </Link>
+        </p>
+      </div>
     </main>
-  )
+  );
 }
