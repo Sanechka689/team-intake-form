@@ -114,6 +114,7 @@ export function IntakeForm() {
   const [links, setLinks] = useState<LinksData | null>(null);
   const [serverError, setServerError] = useState<string>('');
   const [isLoadingLinks, setIsLoadingLinks] = useState(true);
+  const [isMobileHelpOpen, setIsMobileHelpOpen] = useState(false);
 
   const {
     register,
@@ -172,7 +173,7 @@ export function IntakeForm() {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-28 pt-8">
+    <main className="mx-auto max-w-5xl px-4 pb-10 pt-8 md:pb-28">
       <section className="section-card animate-floatIn bg-gradient-to-br from-white via-blue-50 to-cyan-50">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Анкета участника</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Заполнение займёт 5–10 минут</h1>
@@ -270,7 +271,7 @@ export function IntakeForm() {
         {serverError ? <p className="text-sm text-red-600">{serverError}</p> : null}
       </form>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 backdrop-blur">
+      <div className="fixed bottom-0 left-0 right-0 hidden border-t border-slate-200 bg-white/95 backdrop-blur md:block">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-2 px-4 py-3">
           <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.folder ?? '/'}>
             Папка проекта
@@ -292,6 +293,64 @@ export function IntakeForm() {
           </Link>
           {isLoadingLinks ? <span className="text-xs text-slate-500">Загружаем ссылки...</span> : null}
         </div>
+      </div>
+
+      <div className="fixed bottom-4 right-4 z-40 md:hidden">
+        {isMobileHelpOpen ? (
+          <div className="w-[min(92vw,340px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-900">Полезные ссылки</p>
+              <button
+                type="button"
+                onClick={() => setIsMobileHelpOpen(false)}
+                className="rounded-full border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-600"
+                aria-label="Свернуть панель ссылок"
+              >
+                Свернуть
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <a className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50" href={links?.folder ?? '/'}>
+                Папка проекта
+              </a>
+              <a
+                className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50"
+                href={links?.cheatsheet ?? '/'}
+              >
+                Шпаргалка
+              </a>
+              <a className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50" href={links?.table ?? '/'}>
+                Таблица
+              </a>
+              <a
+                className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50"
+                href={links?.instruction ?? '/instruction'}
+              >
+                Инструкция
+              </a>
+              <a
+                className="rounded-lg border border-slate-200 px-3 py-2 text-center text-xs font-medium hover:bg-slate-50"
+                href={links?.askQuestion ?? '/'}
+              >
+                Задать вопрос
+              </a>
+              <Link className="rounded-lg bg-blue-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-blue-700" href="/instruction">
+                Пошаговая инструкция
+              </Link>
+            </div>
+            {isLoadingLinks ? <p className="mt-2 text-center text-xs text-slate-500">Загружаем ссылки...</p> : null}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsMobileHelpOpen(true)}
+            className="h-14 w-14 rounded-full bg-blue-600 text-3xl font-bold leading-none text-white shadow-xl ring-4 ring-blue-100"
+            aria-label="Открыть панель ссылок и помощи"
+          >
+            ?
+          </button>
+        )}
       </div>
     </main>
   );
