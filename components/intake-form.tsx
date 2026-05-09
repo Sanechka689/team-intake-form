@@ -90,27 +90,31 @@ export function IntakeForm({ token }: { token: string }) {
     setServerMessage('Сохраняем данные...');
     const idempotencyKey = crypto.randomUUID();
 
-    const response = await fetch('/api/submissions/upsert', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-access-token': token,
-        'x-idempotency-key': idempotencyKey
-      },
-      body: JSON.stringify(data)
-    });
+    try {
+      const response = await fetch('/api/submissions/upsert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-access-token': token,
+          'x-idempotency-key': idempotencyKey
+        },
+        body: JSON.stringify(data)
+      });
 
-    const json = await response.json();
-    if (!response.ok || !json.ok) {
-      setServerMessage(`Ошибка: ${json.error ?? 'не удалось сохранить форму'}`);
-      return;
+      const json = await response.json();
+      if (!response.ok || !json.ok) {
+        setServerMessage(`Ошибка: ${json.error ?? 'не удалось сохранить форму'}`);
+        return;
+      }
+
+      setServerMessage(
+        json.operation === 'insert'
+          ? `Готово: создана новая запись (строка ${json.rowNumber}, request_id: ${json.requestId}).`
+          : `Готово: обновлена ваша запись (строка ${json.rowNumber}, request_id: ${json.requestId}).`
+      );
+    } catch {
+      setServerMessage('Ошибка сети: проверьте интернет и нажмите «Отправить анкету» ещё раз.');
     }
-
-    setServerMessage(
-      json.operation === 'insert'
-        ? `Готово: создана новая запись (строка ${json.rowNumber}).`
-        : `Готово: обновлена ваша запись (строка ${json.rowNumber}).`
-    );
   });
 
   return (
@@ -124,6 +128,29 @@ export function IntakeForm({ token }: { token: string }) {
           <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${filled}%` }} />
         </div>
         <p className="mt-2 text-xs text-slate-500">Прогресс заполнения: {filled}%</p>
+      </section>
+
+      <section className="mt-6 section-card">
+        <h2 className="text-xl font-semibold">Как заполнить и отправить</h2>
+        <ol className="mt-3 grid gap-2 text-sm text-slate-700 md:grid-cols-3">
+          <li className="rounded-lg bg-slate-50 p-3"><strong>1.</strong> Откройте шпаргалку и инструкцию по кнопкам ниже.</li>
+          <li className="rounded-lg bg-slate-50 p-3"><strong>2.</strong> Заполните обязательные поля и проверьте контакт.</li>
+          <li className="rounded-lg bg-slate-50 p-3"><strong>3.</strong> Нажмите «Отправить анкету» и дождитесь сообщения «Готово».</li>
+        </ol>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.cheatsheet ?? '#'} target="_blank" rel="noreferrer">
+            Открыть шпаргалку
+          </a>
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.instruction ?? '#'} target="_blank" rel="noreferrer">
+            Открыть инструкцию
+          </a>
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.table ?? '#'} target="_blank" rel="noreferrer">
+            Открыть таблицу вручную
+          </a>
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.askQuestion ?? '#'} target="_blank" rel="noreferrer">
+            Задать вопрос
+          </a>
+        </div>
       </section>
 
       <section className="mt-6 grid gap-4 md:grid-cols-3">
@@ -202,6 +229,10 @@ export function IntakeForm({ token }: { token: string }) {
         </button>
 
         {serverMessage ? <p className="text-sm text-slate-700">{serverMessage}</p> : null}
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          После успешной отправки вы получите номер строки и request_id. Это подтверждение, что данные записаны в таблицу.
+        </div>
       </form>
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 backdrop-blur">
