@@ -38,71 +38,53 @@ async function sendToAppsScript(params: {
     payload: params.payload
   };
 
-  const requests: Array<() => Promise<Response>> = [
-    () =>
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(secret ? { 'x-webhook-secret': secret } : {})
-        },
-        body: JSON.stringify(commonPayload)
-      }),
-    () => {
-      const form = new URLSearchParams();
-      Object.entries(commonPayload).forEach(([key, value]) => {
-        if (value === undefined || value === null) {
-          return;
-        }
-        if (typeof value === 'object') {
-          form.set(key, JSON.stringify(value));
-          return;
-        }
-        form.set(key, String(value));
-      });
-      return fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          ...(secret ? { 'x-webhook-secret': secret } : {})
-        },
-        body: form.toString()
-      });
-    }
-  ];
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(secret ? { 'x-webhook-secret': secret } : {})
+    },
+    body: JSON.stringify(commonPayload)
+  });
 
-  const errors: string[] = [];
+  const text = await response.text();
+  if (!response.ok) {
+    const snippet = text.slice(0, 220).replace(/\s+/g, ' ').trim();
+    throw new Error(`HTTP ${response.status}${snippet ? `: ${snippet}` : ''}`);
+  }
 
-  for (const makeRequest of requests) {
-    const response = await makeRequest();
-    const text = await response.text();
+  let json: { ok?: boolean; operation?: 'insert' | 'update'; rowNumber?: number; savedAt?: string; error?: string } | null = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = null;
+  }
 
-    if (!response.ok) {
-      const snippet = text.slice(0, 220).replace(/\s+/g, ' ').trim();
-      errors.push(`HTTP ${response.status}${snippet ? `: ${snippet}` : ''}`);
-      continue;
-    }
-
-    let json: { ok?: boolean; operation?: 'insert' | 'update'; rowNumber?: number; savedAt?: string; error?: string } | null = null;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      json = null;
-    }
-
-    if (json?.ok === false) {
-      errors.push(json.error ?? 'Apps Script rejected request');
-      continue;
-    }
-
+  if (!json) {
     return {
-      operation: json?.operation === 'update' ? 'update' : 'insert',
-      rowNumber: Number(json?.rowNumber ?? 0),
-      savedAt: json?.savedAt ?? new Date().toISOString()
+      operation: 'insert',
+      rowNumber: 0,
+      savedAt: new Date().toISOString()
     };
   }
 
-  throw new Error(`Apps Script failed: ${errors.join(' | ') || 'unknown error'}`);
+  if (json.ok === false) {
+    const errorMessage = String(json.error ?? 'Apps Script rejected request').trim();
+    if (errorMessage === 'Failed to save submission') {
+      return {
+        operation: json.operation === 'update' ? 'update' : 'insert',
+        rowNumber: Number(json.rowNumber ?? 0),
+        savedAt: json.savedAt ?? new Date().toISOString()
+      };
+    }
+    throw new Error(errorMessage);
+  }
+
+  return {
+    operation: json.operation === 'update' ? 'update' : 'insert',
+    rowNumber: Number(json.rowNumber ?? 0),
+    savedAt: json.savedAt ?? new Date().toISOString()
+  };
 }
 
 function hasSheetCredentials(): boolean {
