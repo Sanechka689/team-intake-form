@@ -138,16 +138,16 @@ export function IntakeForm({ token }: { token: string }) {
           <li className="rounded-lg bg-slate-50 p-3"><strong>3.</strong> Нажмите «Отправить анкету» и дождитесь сообщения «Готово».</li>
         </ol>
         <div className="mt-4 flex flex-wrap gap-2">
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.cheatsheet ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.cheatsheet ?? '/instruction#cheatsheet'}>
             Открыть шпаргалку
           </a>
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.instruction ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.instruction ?? '/instruction'}>
             Открыть инструкцию
           </a>
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.table ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.table ?? '/instruction#table'}>
             Открыть таблицу вручную
           </a>
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.askQuestion ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.askQuestion ?? '/instruction#contacts'}>
             Задать вопрос
           </a>
         </div>
@@ -237,16 +237,16 @@ export function IntakeForm({ token }: { token: string }) {
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-2 px-4 py-3">
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.cheatsheet ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.cheatsheet ?? '/instruction#cheatsheet'}>
             Открыть шпаргалку
           </a>
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.table ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.table ?? '/instruction#table'}>
             Открыть таблицу вручную
           </a>
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.askQuestion ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.askQuestion ?? '/instruction#contacts'}>
             Задать вопрос
           </a>
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.instruction ?? '#'} target="_blank" rel="noreferrer">
+          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links?.instruction ?? '/instruction'}>
             Инструкция
           </a>
           {isLoadingLinks ? <span className="text-xs text-slate-500">Загружаем ссылки...</span> : null}

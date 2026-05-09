@@ -1,16 +1,13 @@
 import { PublicHome } from '@/components/public-home';
+import { getAppLinks } from '@/lib/links';
 
 export default function HomePage() {
+  const links = getAppLinks();
+
   return (
     <PublicHome
-      defaultFormPath={process.env.DEFAULT_FORM_PATH ?? null}
-      links={{
-        folder: process.env.LINK_FOLDER ?? '#',
-        cheatsheet: process.env.LINK_CHEATSHEET ?? '#',
-        table: process.env.LINK_TABLE ?? '#',
-        instruction: process.env.LINK_INSTRUCTION ?? '#',
-        askQuestion: process.env.LINK_QUESTIONS ?? '#'
-      }}
+      defaultFormPath="/form"
+      links={links}
     />
   );
 }

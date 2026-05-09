@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAppLinks } from '@/lib/links';
 import { isAccessTokenValid } from '@/lib/security/access';
 
 export async function GET(request: Request) {
@@ -10,12 +11,6 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    data: {
-      folder: process.env.LINK_FOLDER ?? '#',
-      cheatsheet: process.env.LINK_CHEATSHEET ?? '#',
-      table: process.env.LINK_TABLE ?? '#',
-      instruction: process.env.LINK_INSTRUCTION ?? '#',
-      askQuestion: process.env.LINK_QUESTIONS ?? '#'
-    }
+    data: getAppLinks()
   });
 }

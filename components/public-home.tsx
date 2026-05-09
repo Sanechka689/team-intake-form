@@ -12,7 +12,7 @@ type PublicLinks = {
 
 type PublicHomeProps = {
   links: PublicLinks;
-  defaultFormPath: string | null;
+  defaultFormPath: string;
 };
 
 export function PublicHome({ links, defaultFormPath }: PublicHomeProps) {
@@ -48,23 +48,15 @@ export function PublicHome({ links, defaultFormPath }: PublicHomeProps) {
           </div>
 
           <div className="mt-7 flex flex-col gap-3 md:flex-row">
-            {defaultFormPath ? (
-              <Link
-                href={defaultFormPath}
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-medium text-white transition hover:bg-slate-800"
-              >
-                Начни отсюда
-              </Link>
-            ) : (
-              <span className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-200 px-5 text-sm font-medium text-slate-500">
-                Анкета скоро откроется
-              </span>
-            )}
+            <Link
+              href={defaultFormPath}
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              Начни отсюда
+            </Link>
             <a
               className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-300 px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               href={links.instruction}
-              target="_blank"
-              rel="noreferrer"
             >
               Пошаговая инструкция
             </a>
@@ -90,19 +82,19 @@ export function PublicHome({ links, defaultFormPath }: PublicHomeProps) {
         <article className="section-card">
           <h2 className="text-lg font-semibold">Полезные ссылки</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.folder} target="_blank" rel="noreferrer">
+            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.folder}>
               Папка проекта
             </a>
-            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.cheatsheet} target="_blank" rel="noreferrer">
+            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.cheatsheet}>
               Шпаргалка
             </a>
-            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.table} target="_blank" rel="noreferrer">
+            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.table}>
               Таблица
             </a>
-            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.instruction} target="_blank" rel="noreferrer">
+            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.instruction}>
               Инструкция
             </a>
-            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.askQuestion} target="_blank" rel="noreferrer">
+            <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.askQuestion}>
               Задать вопрос
             </a>
           </div>
