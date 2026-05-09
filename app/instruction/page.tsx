@@ -33,7 +33,7 @@ export default function InstructionPage() {
       <section id="materials" className="mt-6 section-card">
         <h2 className="text-xl font-semibold">Материалы проекта</h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          <a className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.folder}>
+          <a id="folder" className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.folder}>
             Папка проекта
           </a>
           <a id="cheatsheet" className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium hover:bg-slate-50" href={links.cheatsheet}>
@@ -46,6 +46,9 @@ export default function InstructionPage() {
             Задать вопрос
           </a>
         </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Если кнопка открыла эту страницу, значит внешняя ссылка ещё не задана в переменных Vercel.
+        </p>
       </section>
     </main>
   );

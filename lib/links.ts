@@ -6,9 +6,16 @@ export type AppLinks = {
   askQuestion: string;
 };
 
+function isValidLink(value: string): boolean {
+  if (value.startsWith('/')) {
+    return true;
+  }
+  return /^(https?:\/\/|mailto:|tel:|tg:)/i.test(value);
+}
+
 function normalizeLink(value: string | undefined, fallback: string): string {
   const clean = String(value ?? '').trim();
-  if (!clean || clean === '#') {
+  if (!clean || clean === '#' || !isValidLink(clean)) {
     return fallback;
   }
   return clean;
